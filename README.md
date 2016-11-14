@@ -51,12 +51,10 @@ Launch the API Explorer (```localhost:8080/_ah/api/explorer```) and click the ti
  - **new_game**
     - Path: 'game'
     - Method: POST
-    - Parameters: user_name, min, max, attempts
+    - Parameters: user_name
     - Returns: GameForm with initial game state.
     - Description: Creates a new Game. user_name provided must correspond to an
-    existing user - will raise a NotFoundException if not. Min must be less than
-    max. Also adds a task to a task queue to update the average moves remaining
-    for active games.
+    existing user - will raise a NotFoundException if not.
      
  - **get_game**
     - Path: 'game/{urlsafe_game_key}'
@@ -68,10 +66,9 @@ Launch the API Explorer (```localhost:8080/_ah/api/explorer```) and click the ti
  - **make_move**
     - Path: 'game/{urlsafe_game_key}'
     - Method: PUT
-    - Parameters: urlsafe_game_key, guess
+    - Parameters: urlsafe_game_key
     - Returns: GameForm with new game state.
-    - Description: Accepts a 'guess' and returns the updated state of the game.
-    If this causes a game to end, a corresponding Score entity will be created.
+    - Description: If this causes a game to end, a corresponding Score entity will be created.
     
  - **get_scores**
     - Path: 'scores'
@@ -135,7 +132,7 @@ Launch the API Explorer (```localhost:8080/_ah/api/explorer```) and click the ti
  - **NewGameForm**
     - Used to create a new game (user_name)
  - **MakeMoveForm**
-    - Inbound make move form (guess).
+    - Inbound make move form (mark).
  - **UserForm**
     - Representation of a User (name, email, wins).
  - **UserForms**
