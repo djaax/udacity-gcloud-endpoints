@@ -1,0 +1,6 @@
+Design Decisions
+
+- To display the win count for a user, I added a 'wins' property which counts the Scores of a user.
+- I added a to_form for User to display the response correctly aswell as a UserForm and UserForms.
+- The marks of a game are stored as a StringProperty in Game model. Every 3 indexes represent a row. The string gets 'listified' to enable editing and then stringified again to enable storing the data.
+- I added a history field to the Game model which holds the marks of each step (again as strings in an array).
