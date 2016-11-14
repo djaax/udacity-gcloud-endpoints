@@ -17,9 +17,10 @@ Note: If you see the API Explorer window but no API listed, you may have to laun
 ## Section 4: Description
 The board is represented as a string, e.g. X00OX0OOX. It comprises 9 fields, every 3 fields is a row:
 
-X | 0 | 0
-O | X | 0
-O | O | X
+| X | 0 | 0 |
+|---|---|---|
+| O | X | 0 |
+| O | O | X |
 
 In this example, player X (user) wins with marks on postion 1, 5, and 9
 
