@@ -121,7 +121,7 @@ If you win a game, your win gets written to the database with a date and a win f
     - Description: Returns all players ranked by performance. The Player with the most wins gets ranked first, the one with the least wins last and so forth.
 
 ## Section 7: Cronjobs
-Every 1 hour, a cronjob gets called, sending out an email to every user who has open games to remind him to continue playing.
+Every monday at 09:00, a cronjob gets called, sending out an email to every user who has open games to remind him to continue playing.
 - Path: /crons/send_reminder
 - Method: GET
 - Parameters: none
