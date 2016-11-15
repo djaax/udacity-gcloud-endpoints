@@ -31,7 +31,7 @@ class Game(ndb.Model):
     marks = ndb.StringProperty(required=True, default='000000000')
     user = ndb.KeyProperty(required=True, kind='User')
     cancelled = ndb.BooleanProperty(required=False)
-    history = ndb.PickleProperty(required=False, default=['000000000'])
+    history = ndb.PickleProperty(required=False, default=[('000000000', 'Start')])
 
     @classmethod
     def new_game(cls, user):
@@ -54,6 +54,11 @@ class Game(ndb.Model):
     def end_game(self, won=False):
         """Ends the game - if won is True, the player won. - if won is False,
         the player lost."""
+        if won is True:
+            self.history.append('You win!')
+        else:
+            self.history.append('You lose!')
+
         self.game_over = True
         self.put()
         # Add the game to the score 'board'

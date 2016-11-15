@@ -32,6 +32,5 @@ class SendReminderEmail(webapp2.RequestHandler):
 
 
 app = webapp2.WSGIApplication([
-    ('/crons/send_reminder', SendReminderEmail),
-    ('/tasks/cache_marks', UpdateMarks),
+    ('/crons/send_reminder', SendReminderEmail)
 ], debug=True)

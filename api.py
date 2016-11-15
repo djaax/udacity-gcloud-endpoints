@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-`
+"""api.py - Create and configure the Game API exposing the resources.
+This can also contain game logic. For more complex games it would be wise to
+move game logic to another file. Ideally the API will be simple, concerned
+primarily with communication to/from the API's users."""
+
 import logging
 import endpoints
 from protorpc import remote, messages
@@ -5,8 +11,15 @@ from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 
 from models import User, Game, Score
-from models import StringMessage, NewGameForm, GameForm, GameForms, UserForm, UserForms, MakeMoveForm,\
+from models import StringMessage, \
+    NewGameForm, \
+    GameForm, \
+    GameForms, \
+    UserForm, \
+    UserForms, \
+    MakeMoveForm, \
     ScoreForms
+
 from utils import get_by_urlsafe
 
 from random import randint
@@ -70,7 +83,7 @@ class TicTacToeApi(remote.Service):
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
         if game:
             if game.game_over:
-              return game.to_form('Game already over! Marks: %s' % game.marks)
+              raise endpoints.ForbiddenException('Illegal action: Game is already over.')
             else:
               return game.to_form('Time to make a move!')
         else:
@@ -87,6 +100,9 @@ class TicTacToeApi(remote.Service):
         if game.game_over:
             return game.to_form('Game already over! Marks: %s' % game.marks)
 
+        if type(request.mark) is not int or request.mark not in range(9):
+          return game.to_form('This move is illegal. Please choose a field from 0 to 8')
+
         marks = list(game.marks)
 
         if marks[request.mark] != '0':
@@ -95,38 +111,59 @@ class TicTacToeApi(remote.Service):
         # Field is not free, user marks X
         marks[request.mark] = 'X'        
         game.marks = ''.join(marks)
-        game.history.append(game.marks)
+        game.history.append((game.marks, 'X marks field %s' % request.mark))
         game.put()
 
+        def check_win(XO):
+          if (marks[0] == XO and marks[1] == XO and marks[2] == XO) or \
+            (marks[3] == XO and marks[4] == XO and marks[5] == XO) or \
+            (marks[6] == XO and marks[7] == XO and marks[8] == XO) or \
+            (marks[0] == XO and marks[4] == XO and marks[8] == XO) or \
+            (marks[0] == XO and marks[3] == XO and marks[6] == XO) or \
+            (marks[1] == XO and marks[4] == XO and marks[7] == XO) or \
+            (marks[2] == XO and marks[5] == XO and marks[8] == XO):
+            return True
+          else:
+            return False
+
+        def check_tie():
+          if (marks[0]=='X' or marks[0]=='O') and \
+            (marks[1]=='X' or marks[1]=='O') and \
+            (marks[2]=='X' or marks[2]=='O') and \
+            (marks[3]=='X' or marks[3]=='O') and \
+            (marks[4]=='X' or marks[4]=='O') and \
+            (marks[5]=='X' or marks[5]=='O') and \
+            (marks[6]=='X' or marks[6]=='O') and \
+            (marks[7]=='X' or marks[7]=='O') and \
+            (marks[8]=='X' or marks[8]=='O'):
+            return True
+          else:
+            return False
+
         # Check for win
-        if (marks[0] == 'X' and marks[1] == 'X' and marks[2] == 'X') or \
-            (marks[3] == 'X' and marks[4] == 'X' and marks[5] == 'X') or \
-            (marks[6] == 'X' and marks[7] == 'X' and marks[8] == 'X') or \
-            (marks[0] == 'X' and marks[4] == 'X' and marks[8] == 'X') or \
-            (marks[0] == 'X' and marks[3] == 'X' and marks[6] == 'X') or \
-            (marks[1] == 'X' and marks[4] == 'X' and marks[7] == 'X') or \
-            (marks[2] == 'X' and marks[5] == 'X' and marks[8] == 'X'):
+        if check_win('X'):
           game.end_game(True)
           return game.to_form('You Win %s!' % game.marks)
 
+        # If every field is marked -> End game (tie)
+        if check_tie is True:
+          game.end_game(False)
+          return game.to_form("It's a Tie %s!" % game.marks)
+
         # Computer marks
-        def computer_makes_move(field):
+        ai_mark = randint(0,8)
+        def computer_random_move(field):
           if ( marks[field] != '0' ):
-            return computer_makes_move(randint(0,8))
+            ai_mark = randint(0,8)
+            return computer_random_move(ai_mark)
           marks[field] = 'O'
-        computer_makes_move(randint(0,8))
+        computer_random_move(ai_mark)
         game.marks = ''.join(marks)
-        game.history.append(game.marks)
+        game.history.append((game.marks, 'O marks field %s' % ai_mark))
         game.put()
 
         # Check for lose
-        if (marks[0] == 'O' and marks[1] == 'O' and marks[2] == 'O') or \
-            (marks[3] == 'O' and marks[4] == 'O' and marks[5] == 'O') or \
-            (marks[6] == 'O' and marks[7] == 'O' and marks[8] == 'O') or \
-            (marks[0] == 'O' and marks[4] == 'O' and marks[8] == 'O') or \
-            (marks[0] == 'O' and marks[3] == 'O' and marks[6] == 'O') or \
-            (marks[1] == 'O' and marks[4] == 'O' and marks[7] == 'O') or \
-            (marks[2] == 'O' and marks[5] == 'O' and marks[8] == 'O'):
+        if check_win('O'):
           game.end_game(False)
           return game.to_form('You Lose %s!' % game.marks)
 
@@ -167,7 +204,11 @@ class TicTacToeApi(remote.Service):
             raise endpoints.NotFoundException(
                     'A User with that name does not exist!')
 
-      games = Game.query(Game.user == user.key)
+      games = Game.query(
+        Game.user == user.key,
+        Game.game_over == False,
+        Game.cancelled != True)
+
       return GameForms(items=[
         game.to_form('Marks: %s' % game.marks) for game in games])
 

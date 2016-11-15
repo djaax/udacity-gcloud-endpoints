@@ -14,6 +14,10 @@ Clone or download this project. Open a terminal and navigate to its path. Using 
 Open a browser and navigate to ```localhost:8080/_ah/api/explorer``` (default settings).
 Note: If you see the API Explorer window but no API listed, you may have to launch your browser in dev mode. For Chrome on Mac use the following command ```/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --user-data-dir=test --allow-running-insecure-content```
 
+## Section 3.1: Tips on Testing
+- To make it easier to test cronjobs and start over with a new database every time, you can start the appserver with some flags. Navigate to the folder with the app.yaml file: ```dev_appserver.py --dev_appserver_log_level=info --clear_datastore=yes --enable_sendmail=yes --show_mail_body=yes .```
+- You can start you browser with the API Explorer ready to go by launching Google Chrome from the command line using these arguments and flags: ```/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome http://localhost:8080/_ah/api/explorer http://localhost:8000 --user-data-dir=test --allow-running-insecure-content --disable-extensions --no-first-run --no-default-browser-check``
+
 ## Section 4: Description
 The board is represented as a string, e.g. X00OX0OOX. It comprises 9 fields, every 3 fields is a row:
 
@@ -30,6 +34,9 @@ Launch the API Explorer (```localhost:8080/_ah/api/explorer```) and click the ti
 1. Create a user (tic_tac_toe.create_user) and memorize the user name.
 2. Create a game (tic_tac_toe.new_game) with the user_name from step 1 and copy the games key from the response.
 3. Make a move (tic_tac_toe.make_move) with the game key copied in step 2. Mark the numeric field which you want to mark as an X. The AI will make a move immediately and returns the marks in the response (see message attribute). Example: If you want to mark the field in the middle of the board (horizontally and vertically) with an X, mark field with index 5. To mark the upper right corner field, mark field with index 3 and so on.
+
+## Section 5.1: Score Keeping
+If you win a game, your win gets written to the database with a date and a win flag.
 
 ## Section 6: Files Included
  - api.py: Contains endpoints and game playing logic.
@@ -94,7 +101,7 @@ Launch the API Explorer (```localhost:8080/_ah/api/explorer```) and click the ti
 
  - **cancel_game**
     - Path: 'game/{urlsafe_game_key}/cancel'
-    - Method: GET,
+    - Method: PUT,
     - Parameters: urlsafe_game_key
     - Returns GameForm.
     - Description: This endpoint allows users to cancel a game in progress.
@@ -111,9 +118,16 @@ Launch the API Explorer (```localhost:8080/_ah/api/explorer```) and click the ti
     - Method: GET,
     - Parameters: none
     - Returns UserForms.
-    - Description: Returns all players ranked by performance
+    - Description: Returns all players ranked by performance. The Player with the most wins gets ranked first, the one with the least wins last and so forth.
 
-## Section 7: Models Included
+## Section 7: Cronjobs
+Every 1 hour, a cronjob gets called, sending out an email to every user who has open games to remind him to continue playing.
+- Path: /crons/send_reminder
+- Method: GET
+- Parameters: none
+- Return Status
+
+## Section 8: Models Included
  - **User**
     - Stores unique user_name and (optional) email address.
     
@@ -123,7 +137,7 @@ Launch the API Explorer (```localhost:8080/_ah/api/explorer```) and click the ti
  - **Score**
     - Records completed games. Associated with Users model via KeyProperty.
     
-## Section 8: Forms Included
+## Section 9: Forms Included
  - **GameForm**
     - Representation of a Game's state (urlsafe_key,
     game_over flag, message, user_name, cancelled).

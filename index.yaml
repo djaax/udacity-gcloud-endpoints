@@ -17,5 +17,11 @@ indexes:
 
 - kind: Game
   properties:
+  - name: game_over
+  - name: user
+  - name: cancelled
+
+- kind: Game
+  properties:
   - name: user
   - name: game_over
